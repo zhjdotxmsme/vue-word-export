@@ -1,4 +1,4 @@
-import type { CellStyle, TableStyle } from './style'
+import type { TextStyle, CellStyle, TableStyle } from './style'
 
 /** 字段配置——描述单个字段在文档中的映射 */
 export interface FieldConfig {
@@ -42,4 +42,85 @@ export interface ListSection {
   style?: Partial<TableStyle>
 }
 
-export type SectionConfig = BasicSection | ListSection
+// ── CoverSection ──────────────────────────────────────────────────────
+
+export interface CoverTitle {
+  type: 'title'
+  text: string | (() => string)
+  style?: Partial<TextStyle>
+}
+
+export interface CoverSubtitle {
+  type: 'subtitle'
+  text: string | (() => string)
+  style?: Partial<TextStyle>
+}
+
+export interface CoverDate {
+  type: 'date'
+  format?: string
+  style?: Partial<TextStyle>
+}
+
+export interface CoverText {
+  type: 'text'
+  text: string | (() => string)
+  style?: Partial<TextStyle>
+}
+
+export interface CoverImage {
+  type: 'image'
+  src: string | (() => string | Promise<string>)
+  width?: number
+  height?: number
+  align?: 'left' | 'center' | 'right'
+}
+
+export type CoverItem = CoverTitle | CoverSubtitle | CoverDate | CoverText | CoverImage
+
+export interface CoverSection {
+  type: 'cover'
+  items: CoverItem[]
+  style?: import('./style').CoverStyle
+}
+
+// ── ParagraphSection ─────────────────────────────────────────────────
+
+export interface TextRunFragment {
+  type: 'text'
+  text: string | (() => string)
+  style?: Partial<TextStyle>
+}
+
+export interface BreakFragment {
+  type: 'break'
+}
+
+export type ParagraphContent = TextRunFragment | BreakFragment
+
+export interface ParagraphSection {
+  type: 'paragraph'
+  title?: string
+  content: ParagraphContent | ParagraphContent[]
+  style?: Partial<import('./style').ParagraphStyle>
+}
+
+// ── ChartSection ─────────────────────────────────────────────────────
+
+export interface ChartSection {
+  type: 'chart'
+  title?: string
+  chartType: 'line' | 'bar' | 'pie' | 'area' | 'scatter'
+  dataField: string
+  dimension: import('./style').ChartDimension
+  width?: number
+  height?: number
+  style?: import('./style').ChartStyle
+}
+
+export type SectionConfig =
+  | BasicSection
+  | ListSection
+  | CoverSection
+  | ParagraphSection
+  | ChartSection
