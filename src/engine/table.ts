@@ -243,27 +243,33 @@ export function buildSection(
 ): (Paragraph | Table)[] {
   const children: (Paragraph | Table)[] = []
 
-  if (section.title) {
-    children.push(
-      new Paragraph({
-        spacing: { before: 200, after: 100 },
-        children: [
-          new TextRun({
-            text: section.title,
-            bold: true,
-            size: 28,
-            font: { name: '微软雅黑' },
-          }),
-        ],
-      }),
-    )
-  }
-
+  // Narrow type first — only BasicSection and ListSection have title
   if (section.type === 'basic') {
+    if (section.title) {
+      children.push(buildSectionTitle(section.title))
+    }
     children.push(buildBasicTable(section, data))
   } else if (section.type === 'list') {
+    if (section.title) {
+      children.push(buildSectionTitle(section.title))
+    }
     children.push(buildListTable(section, data))
   }
 
   return children
+}
+
+/** 构建 Section 标题段落 */
+function buildSectionTitle(title: string): Paragraph {
+  return new Paragraph({
+    spacing: { before: 200, after: 100 },
+    children: [
+      new TextRun({
+        text: title,
+        bold: true,
+        size: 28,
+        font: { name: '微软雅黑' },
+      }),
+    ],
+  })
 }

@@ -77,6 +77,24 @@
         </template>
       </WordExport>
     </section>
+
+    <!-- ========== 示例6: 封面 + 富文本段落 ========== -->
+    <section class="demo-section">
+      <h2>6. 封面 + 富文本段落 + 页眉页脚</h2>
+      <p>使用 CoverSection + ParagraphSection + 页眉页脚构建完整报告</p>
+      <button class="btn primary" :disabled="reportLoading" @click="handleFullReport">
+        {{ reportLoading ? '生成中...' : '导出完整报告' }}
+      </button>
+    </section>
+
+    <!-- ========== 示例7: 自定义全局主题 ========== -->
+    <section class="demo-section">
+      <h2>7. 自定义全局主题</h2>
+      <p>通过 theme 覆盖全局默认样式（字体、颜色、表格样式等）</p>
+      <button class="btn success" :disabled="themeLoading" @click="handleThemeExport">
+        {{ themeLoading ? '生成中...' : '导出主题报告' }}
+      </button>
+    </section>
   </div>
 </template>
 
@@ -388,6 +406,199 @@ const complexSections: SectionConfig[] = [
     ],
   },
 ]
+
+// ══════════════════════════════════════════════════════════
+//  示例6: 封面 + 富文本段落 + 页眉页脚
+// ══════════════════════════════════════════════════════════
+
+const { exportWord: reportExport, loading: reportLoading } = useWordExporter()
+
+async function handleFullReport() {
+  await reportExport({
+    filename: '完整报告.docx',
+    title: '某某项目尽职调查报告',
+    // 页眉页脚
+    header: {
+      center: { text: '某某数据科技有限公司', style: { fontSize: 9, fontColor: '#999999' } },
+      border: true,
+    },
+    footer: {
+      center: [
+        { text: '第 ' },
+        { type: 'pageNumber' },
+        { text: ' 页 / 共 ' },
+        { type: 'totalPages' },
+        { text: ' 页' },
+      ],
+      border: true,
+    },
+    differentFirstPage: true,
+    // 主题
+    theme: {
+      fontFamily: '微软雅黑',
+      title: { style: { fontSize: 24, bold: true, fontColor: '#1a1a2e' } },
+    },
+    sections: [
+      // 封面
+      {
+        type: 'cover' as const,
+        items: [
+          { type: 'title', text: '某某项目尽职调查报告',
+            style: { fontSize: 32, bold: true, fontColor: '#1a1a2e' } },
+          { type: 'subtitle', text: 'Due Diligence Report',
+            style: { fontSize: 14, fontColor: '#666666' } },
+          { type: 'text', text: '某某数据科技有限公司',
+            style: { fontSize: 11, fontColor: '#999999' } },
+          { type: 'date', format: 'YYYY年MM月DD日' },
+        ],
+      },
+      // 项目概述（富文本段落）
+      {
+        type: 'paragraph' as const,
+        title: '一、项目概述',
+        content: {
+          type: 'text', text: '某某项目是本公司重点投资的战略性项目，旨在通过技术手段实现业务流程的全面数字化转型。本项目覆盖了数据采集、处理、分析和可视化展示的全链路能力。',
+        },
+        style: { indentFirstLine: 480, lineSpacing: 360 },
+      },
+      // 审核意见（富文本混排）
+      {
+        type: 'paragraph' as const,
+        title: '二、审核意见',
+        content: [
+          { type: 'text', text: '经审核，该项目整体风险等级为' },
+          { type: 'text', text: '低风险', style: { bold: true, fontColor: '#4CAF50' } },
+          { type: 'text', text: '。其中财务指标' },
+          { type: 'text', text: '全部达标', style: { bold: true, fontColor: '#2196F3' } },
+          { type: 'text', text: '，技术方案' },
+          { type: 'text', text: '符合预期', style: { bold: true, fontColor: '#2196F3' } },
+          { type: 'text', text: '，团队能力' },
+          { type: 'text', text: '优秀', style: { bold: true, fontColor: '#FF9800' } },
+          { type: 'text', text: '。建议按计划推进。' },
+        ],
+        style: { indentFirstLine: 480, lineSpacing: 360 },
+      },
+      // 核心数据（基本信息区）
+      {
+        type: 'basic' as const,
+        title: '三、核心数据',
+        columns: 2,
+        fields: [
+          { label: '项目估值', field: 'valuation',
+            format: (v: unknown) => `${Number(v).toLocaleString()} 万元` },
+          { label: '投资金额', field: 'investment',
+            format: (v: unknown) => `${Number(v).toLocaleString()} 万元` },
+          { label: '股权比例', field: 'equity',
+            format: (v: unknown) => `${v}%` },
+          { label: '预计回报率', field: 'roi',
+            format: (v: unknown) => `${v}%` },
+        ],
+      },
+      // 团队信息（列表区）
+      {
+        type: 'list' as const,
+        title: '四、核心团队',
+        dataField: 'team',
+        columns: [
+          { label: '姓名', field: 'name' },
+          { label: '职位', field: 'position' },
+          { label: '从业年限', field: 'experience',
+            format: (v: unknown) => `${v} 年` },
+        ],
+      },
+    ],
+    data: {
+      valuation: 50000,
+      investment: 5000,
+      equity: 10,
+      roi: 25,
+      team: [
+        { name: '张总', position: 'CEO', experience: 15 },
+        { name: '李总', position: 'CTO', experience: 12 },
+        { name: '王总', position: 'CFO', experience: 18 },
+      ],
+    },
+  })
+}
+
+// ══════════════════════════════════════════════════════════
+//  示例7: 自定义全局主题
+// ══════════════════════════════════════════════════════════
+
+const { exportWord: themeExport, loading: themeLoading } = useWordExporter()
+
+async function handleThemeExport() {
+  await themeExport({
+    filename: '主题样式演示.docx',
+    title: '主题样式演示',
+    // 通过 theme 覆盖全局默认样式
+    theme: {
+      fontFamily: '微软雅黑',
+      fontSize: 11,
+      title: { style: { fontSize: 26, bold: true, fontColor: '#1565C0' } },
+      paragraph: {
+        style: { indentFirstLine: 480, lineSpacing: 400, spacingAfter: 120 },
+      },
+      table: {
+        list: {
+          headerStyle: { bold: true, fontSize: 10, fontName: '微软雅黑', bgColor: '#1565C0', fontColor: '#FFFFFF' },
+          cellStyle: { fontSize: 10, fontName: '微软雅黑', border: true },
+        },
+      },
+      chart: {
+        colorPalette: ['#1565C0', '#7B1FA2', '#00897B', '#E65100'],
+      },
+      headerFooter: {
+        style: { fontSize: 8, fontName: '微软雅黑', fontColor: '#AAAAAA' },
+        border: true,
+      },
+    },
+    footer: {
+      center: [{ type: 'pageNumber' as const }],
+    },
+    sections: [
+      // 封面
+      {
+        type: 'cover' as const,
+        items: [
+          { type: 'title', text: '主题样式演示文档',
+            style: { fontSize: 28, bold: true, fontColor: '#1565C0' } },
+          { type: 'subtitle', text: '展示 DocumentTheme 全局覆盖效果' },
+          { type: 'date' },
+        ],
+      },
+      // 段落
+      {
+        type: 'paragraph' as const,
+        title: '全局主题说明',
+        content: [
+          { type: 'text', text: '通过 ' },
+          { type: 'text', text: 'theme', style: { bold: true, fontName: 'Courier New' } },
+          { type: 'text', text: ' 选项，可以一次性覆盖文档中所有 Section 的默认样式，无需逐个配置。' },
+        ],
+      },
+      // 列表
+      {
+        type: 'list' as const,
+        title: '主题效果对比',
+        dataField: 'items',
+        columns: [
+          { label: '样式项', field: 'name' },
+          { label: '默认值', field: 'default' },
+          { label: '自定义值', field: 'custom' },
+        ],
+      },
+    ],
+    data: {
+      items: [
+        { name: '正文字体', default: '微软雅黑 10.5pt', custom: '微软雅黑 11pt' },
+        { name: '文档标题', default: '22pt 加粗', custom: '26pt 加粗 蓝色' },
+        { name: '表头背景', default: '#D9E2F3', custom: '#1565C0 白色文字' },
+        { name: '段落缩进', default: '480 twips', custom: '480 twips 1.25倍行距' },
+      ],
+    },
+  })
+}
 
 const complexData = {
   reportId: 'REP-2026-0001',

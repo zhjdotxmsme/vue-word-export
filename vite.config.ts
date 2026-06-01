@@ -15,7 +15,7 @@ export default defineConfig({
       fileName: 'vue-word-export',
     },
     rollupOptions: {
-      external: ['vue', 'docx'],
+      external: ['vue', 'docx', 'echarts'],
       output: {
         globals: {
           vue: 'Vue',
