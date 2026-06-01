@@ -35,6 +35,7 @@ export interface TableStyle {
 
 // ── ParagraphStyle ────────────────────────────────────────────────────
 
+/** 段落样式（对应 docx 中 IParagraphProperties） */
 export interface ParagraphStyle {
   align?: 'left' | 'center' | 'right' | 'justify'
   spacingBefore?: number
@@ -51,11 +52,13 @@ export interface ParagraphStyle {
 
 // ── ChartStyle ────────────────────────────────────────────────────────
 
+/** 图表维度配置 - 数据到图表的映射 */
 export interface ChartDimension {
   categoryField: string
   valueFields: ChartValueField[]
 }
 
+/** 图表数值字段配置 */
 export interface ChartValueField {
   field: string
   name?: string
@@ -63,6 +66,7 @@ export interface ChartValueField {
   format?: (value: unknown) => string
 }
 
+/** 图表样式配置 */
 export interface ChartStyle {
   colorPalette?: string[]
   showLegend?: boolean
@@ -75,6 +79,7 @@ export interface ChartStyle {
 
 // ── CoverStyle ────────────────────────────────────────────────────────
 
+/** 封面样式配置 */
 export interface CoverStyle {
   backgroundColor?: string
   verticalAlign?: 'middle' | 'top' | 'bottom'
@@ -84,6 +89,7 @@ export interface CoverStyle {
 
 // ── DocumentTheme ─────────────────────────────────────────────────────
 
+/** 全局文档主题 - 覆盖所有 Section 的默认样式 */
 export interface DocumentTheme {
   fontFamily?: string
   fontSize?: number
