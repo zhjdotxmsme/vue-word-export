@@ -32,9 +32,11 @@ export async function renderChart(
   const option = buildChartOption(section, items as Record<string, unknown>[], colorPalette)
 
   // Dynamic import of echarts (optional peer dependency)
+  // 使用 Function 构造器避免 Rollup/Vite 静态分析
   let echarts: any
   try {
-    echarts = await import('echarts')
+    const load = new Function('return import("echarts")')
+    echarts = await load()
   } catch {
     throw new Error(
       'echarts 是 ChartSection 的可选依赖，请安装: npm install echarts',
