@@ -137,6 +137,9 @@ dist
 !.yarn/sdks
 !.yarn/versions
 
+# AI-generated design docs & plans
+docs/
+
 # Vite files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
