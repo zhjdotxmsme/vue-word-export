@@ -10,4 +10,7 @@ export type {
   TextRunFragment, BreakFragment, ParagraphContent, ParagraphSection,
   ChartSection,
 } from './document'
-export type { ExportOptions } from './export'
+export type {
+  ExportOptions,
+  HeaderFooterText, HeaderFooterElement, HeaderFooterContent, HeaderFooterConfig,
+} from './export'
