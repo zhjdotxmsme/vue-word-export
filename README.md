@@ -1,13 +1,17 @@
 # vue-word-export
 
-基于 **Vue 3 + TypeScript + [docx](https://github.com/dolanmiu/docx)** 的 Word 文档导出组件。将后端 JSON 数据渲染为格式化的 `.docx` 文件，支持基本信息区和列表数据区，全配置化导出。
+基于 **Vue 3 + TypeScript + [docx](https://github.com/dolanmiu/docx)** 的 Word 文档导出组件。将后端 JSON 数据渲染为格式化的 `.docx` 文件，支持多种文档段落类型，全配置化导出。
 
 - 🚀 **零框架依赖** — engine 层纯 TypeScript，无 Vue 耦合
-- 📦 **轻量** — 打包后 ~3.2 KB (gzip)
+- 📦 **轻量** — 打包后 ~3.5 KB (gzip)
 - 🧩 **双形态** — Hook (`useWordExporter`) + 组件 (`<WordExport>`)
 - 📝 **基本信息区** — 无边框多列并排，内容超长自动列内换行
 - 📊 **列表数据区** — 标准表格（表头 + 数据行），支持格式化
-- 🎨 **自定义样式** — 字体/颜色/对齐
+- 🎨 **封面页** — 自定义标题/副标题/日期/Logo，支持背景色和居中布局
+- 📄 **富文本段落** — 纯文本 + 混排样式（段内加粗/颜色/字体混排）
+- 📈 **图表** — 折线图/柱状图/饼图/面积图（基于 ECharts SVG 渲染）
+- 📌 **页眉/页脚/页码** — 左/中/右三区，支持页码、总页数、日期
+- 🎨 **全局主题** — 统一默认样式，所有值可覆盖
 - 🌳 **Tree-shakable** — 按需导入
 
 ---
@@ -19,6 +23,7 @@ npm install vue-word-export docx
 ```
 
 > `docx` 是 peer dependency，需要单独安装。
+> `echarts` 是可选依赖（仅在 ChartSection 使用时需要）：`npm install echarts`
 
 ---
 
@@ -126,10 +131,15 @@ async function handleExport() {
 
 ### SectionConfig — 文档段落配置
 
-Word 文档被定义为有序的 Section 列表，每个 Section 可以是 `basic` 或 `list`：
+Word 文档被定义为有序的 Section 列表，目前支持 **5 种 Section 类型**：
 
 ```typescript
-type SectionConfig = BasicSection | ListSection
+type SectionConfig =
+  | BasicSection        // 基本信息区（键值对）
+  | ListSection         // 列表数据区（表格）
+  | CoverSection        // 封面页
+  | ParagraphSection    // 富文本段落
+  | ChartSection        // 图表
 ```
 
 ### BasicSection — 基本信息区
@@ -157,6 +167,126 @@ interface ListSection {
   dataField: string               // 数组数据字段路径
   columns: FieldConfig[]           // 列配置
   style?: Partial<TableStyle>
+}
+```
+
+### CoverSection — 封面页
+
+渲染为独立封面页，自动分页。支持标题、副标题、日期、正文、Logo 等多种元素。
+
+```typescript
+interface CoverSection {
+  type: 'cover'
+  items: CoverItem[]               // 封面元素列表（按序渲染）
+  style?: CoverStyle
+}
+
+// 支持的元素类型
+type CoverItem = CoverTitle | CoverSubtitle | CoverDate | CoverText | CoverImage
+
+interface CoverTitle {
+  type: 'title'
+  text: string | (() => string)
+  style?: Partial<TextStyle>
+}
+
+interface CoverImage {
+  type: 'image'
+  src: string | (() => string | Promise<string>)
+  width?: number
+  height?: number
+  align?: 'left' | 'center' | 'right'
+}
+```
+
+**示例：**
+```typescript
+{
+  type: 'cover',
+  items: [
+    { type: 'image', src: logoBase64, width: 200 },
+    { type: 'title', text: '企业信用报告',
+      style: { fontSize: 36, bold: true } },
+    { type: 'subtitle', text: 'Enterprise Credit Report' },
+    { type: 'date', format: 'YYYY年MM月DD日' },
+  ]
+}
+```
+
+### ParagraphSection — 富文本段落
+
+支持纯文本段落和段内样式混排。
+
+```typescript
+interface ParagraphSection {
+  type: 'paragraph'
+  title?: string                                  // 可选标题
+  content: TextRunFragment | TextRunFragment[]    // 文本块或混合文本块数组
+  style?: Partial<ParagraphStyle>
+}
+
+interface TextRunFragment {
+  type: 'text'
+  text: string | (() => string)
+  style?: Partial<TextStyle>
+}
+```
+
+**纯文本段落：**
+```typescript
+{
+  type: 'paragraph',
+  title: '项目背景',
+  content: { type: 'text', text: '本项目旨在建设一套企业级数据管理平台。' },
+  style: { indentFirstLine: 480, lineSpacing: 360 }
+}
+```
+
+**富文本混排：**
+```typescript
+{
+  type: 'paragraph',
+  content: [
+    { type: 'text', text: '经审核，该企业' },
+    { type: 'text', text: '符合', style: { bold: true, fontColor: '#4CAF50' } },
+    { type: 'text', text: '本次申报条件。' },
+  ]
+}
+```
+
+### ChartSection — 图表
+
+渲染为静态图片嵌入文档。**需要安装 `echarts` 作为可选依赖。**
+
+```typescript
+interface ChartSection {
+  type: 'chart'
+  title?: string
+  chartType: 'line' | 'bar' | 'pie' | 'area' | 'scatter'
+  dataField: string              // 数组数据路径
+  dimension: ChartDimension
+  width?: number                 // 图片宽度（dxa）
+  height?: number                // 图片高度（dxa）
+  style?: ChartStyle
+}
+
+interface ChartDimension {
+  categoryField: string          // X轴/饼图标签字段
+  valueFields: ChartValueField[] // 数值字段列表（支持多系列）
+}
+```
+
+**示例：**
+```typescript
+{
+  type: 'chart',
+  title: '月度营收趋势',
+  chartType: 'line',
+  dataField: 'monthlyTrend',
+  dimension: {
+    categoryField: 'month',
+    valueFields: [{ field: 'revenue', name: '营收' }]
+  }
 }
 ```
 
@@ -265,6 +395,10 @@ interface ExportOptions {
   filename?: string                 // 文件名，默认 'export.docx'
   pageOrientation?: 'portrait' | 'landscape'
   margins?: { top? bottom? left? right? }
+  header?: HeaderFooterConfig       // 页眉配置
+  footer?: HeaderFooterConfig       // 页脚配置
+  differentFirstPage?: boolean      // 首页不同（封面页不显示页眉页脚）
+  theme?: DocumentTheme             // 全局样式主题
 }
 ```
 
@@ -278,6 +412,43 @@ interface ExportOptions {
 | `filename` | `string` | `'export.docx'` | 导出文件名 |
 | `pageOrientation` | `'portrait' \| 'landscape'` | `'portrait'` | 页面方向 |
 | `margins` | `{ top?, bottom?, left?, right? }` | — | 页边距 |
+
+### 页眉/页脚
+
+```typescript
+interface HeaderFooterConfig {
+  left?: HeaderFooterContent        // 左侧内容
+  center?: HeaderFooterContent      // 中间内容
+  right?: HeaderFooterContent       // 右侧内容
+  border?: boolean                  // 分割线（默认 true）
+}
+
+type HeaderFooterContent =
+  | string
+  | { text: string | (() => string); style?: Partial<TextStyle> }
+  | ({ text: string | (() => string); style?: Partial<TextStyle> } | { type: 'pageNumber' } | { type: 'totalPages' } | { type: 'date'; format?: string } | { type: 'image'; src: string; width?: number; height?: number })[]
+```
+
+**示例：**
+```typescript
+{
+  header: {
+    center: { text: '某某科技有限公司', style: { fontSize: 9, fontColor: '#999' } },
+  },
+  footer: {
+    left: { type: 'date', format: 'YYYY-MM-DD' },
+    center: { type: 'pageNumber' },
+    right: [
+      { text: '第 ' },
+      { type: 'pageNumber' },
+      { text: ' 页 / 共 ' },
+      { type: 'totalPages' },
+      { text: ' 页' },
+    ],
+  },
+  differentFirstPage: true,
+}
+```
 
 ### WordExport 组件 Events
 
@@ -325,7 +496,73 @@ interface CellStyle {
 }
 ```
 
----
+### ParagraphStyle — 段落样式
+
+```typescript
+interface ParagraphStyle {
+  align?: 'left' | 'center' | 'right' | 'justify'
+  spacingBefore?: number    // 段前间距（twips）
+  spacingAfter?: number     // 段后间距（twips）
+  lineSpacing?: number      // 行距
+  indentFirstLine?: number  // 首行缩进（twips）
+  indentLeft?: number
+  indentRight?: number
+  headingLevel?: 1 | 2 | 3 | 4 | 5 | 6
+  pageBreakBefore?: boolean
+  keepWithNext?: boolean
+  keepLines?: boolean
+}
+```
+
+### ChartStyle — 图表样式
+
+```typescript
+interface ChartStyle {
+  colorPalette?: string[]   // 调色板
+  showLegend?: boolean
+  legendPosition?: 'top' | 'bottom' | 'left' | 'right'
+  xAxisName?: string
+  yAxisName?: string
+  showDataLabel?: boolean
+  backgroundColor?: string
+}
+```
+
+### CoverStyle — 封面样式
+
+```typescript
+interface CoverStyle {
+  backgroundColor?: string
+  verticalAlign?: 'middle' | 'top' | 'bottom'
+  itemSpacing?: number              // 元素间距（twips）
+  margins?: { top?, bottom?, left?, right? }
+}
+```
+
+### DocumentTheme — 全局主题
+
+通过 `theme` 设置全局默认样式，所有值可被各 Section 的 `style` 覆盖。
+
+```typescript
+interface DocumentTheme {
+  fontFamily?: string              // 默认 '微软雅黑'
+  fontSize?: number                // 默认 10.5pt
+  title?: { style?: Partial<TextStyle> }
+  cover?: Partial<CoverStyle>
+  paragraph?: {
+    style?: Partial<ParagraphStyle>
+    heading?: Record<number, Partial<TextStyle>>
+  }
+  table?: {
+    basic?: { labelStyle?, valueStyle?, border? }
+    list?: { headerStyle?, cellStyle?, border? }
+  }
+  chart?: { colorPalette?: string[]; style?: Partial<ChartStyle> }
+  headerFooter?: { style?: Partial<TextStyle>; border?: boolean }
+}
+```
+
+**样式优先级：** `字段/style` > `section/style` > `theme/对应类型` > `内置默认值`
 
 ## 完整示例
 
@@ -437,6 +674,9 @@ cd vue-word-export && npm install
 # 类型检查
 npm run typecheck
 
+# 测试
+npm run test
+
 # 构建
 npm run build
 
@@ -450,6 +690,7 @@ cd example && npm install && npm run dev
 
 - **Vue 3** — Composition API + TypeScript
 - **docx** ^8.0.0 — Word 文档生成库（[GitHub](https://github.com/dolanmiu/docx)）
+- **echarts** — 图表渲染（可选，ChartSection 需要）
 - **Vite** — 库模式构建
 - **Vitest** — 单元测试
 
